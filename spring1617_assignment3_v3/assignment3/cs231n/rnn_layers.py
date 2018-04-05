@@ -227,7 +227,11 @@ def word_embedding_backward(dout, cache):
     ##############################################################################
     x, W = cache
     dW   = np.zeros_like(W)
-    dW = np.add.at(dout, 
+    T    = dout.shape[1]
+    for i in range(T):
+        np.add.at(dW, x[:,i], dout[:,i,:])
+    
+                       
     pass
     ##############################################################################
     #                               END OF YOUR CODE                             #
