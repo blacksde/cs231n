@@ -105,6 +105,14 @@ def rnn_forward(x, h0, Wx, Wh, b):
     # input data. You should use the rnn_step_forward function that you defined  #
     # above. You can use a for loop to help compute the forward pass.            #
     ##############################################################################
+    N, T, _ = x.shape
+    _, H    = h0.shape
+    h       = np.zeros((N, T, H))
+    cache   = {} 
+    prev_h  = h0
+    for i in range(T):
+        prev_h, cache[i] = rnn_step_forward(x[:,i,:], prev_h, Wx, Wh, b)
+        h[:,i,:] = prev_h
     pass
     ##############################################################################
     #                               END OF YOUR CODE                             #
