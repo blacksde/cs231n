@@ -143,7 +143,7 @@ class CaptioningRNN(object):
         hidden_state, cache_hs = affine_forward(features, W_proj, b_proj)
         
         # (2)
-        word_vec, cache_ws     = word_embedding_forward(captions_in, W_embed)
+        word_vec, cache_wv     = word_embedding_forward(captions_in, W_embed)
         
         # (3)
         if self.cell_type == 'rnn':
@@ -161,7 +161,13 @@ class CaptioningRNN(object):
         
         # (3)
         if self.cell_type == 'rnn':
-            timesteps, cache_ts= rnn_forward(word_vec, hidden_state, Wx, Wh, b)
+            dwv, dhs, grads['Wx'], grads['Wh'], grads['b']= rnn_backward(dtimesteps, cache_ts)
+            
+        # (2)
+        grads['W_embed'] = word_embedding_backward(dwv, cache_wv)
+        
+        # (1)
+        _, grads['W_proj'], grads['b_proj'] = affine_backward(dhs, cache_hs)
             
         pass
         ############################################################################
@@ -225,6 +231,28 @@ class CaptioningRNN(object):
         # functions; you'll need to call rnn_step_forward or lstm_step_forward in #
         # a loop.                                                                 #
         ###########################################################################
+        prev_h, _ = affine_forward(features, W_proj, b_proj)
+        
+
+        word   = self._start*np.ones(N, dtype=np.int32)
+        word_test   = self._start*np.ones((N,1), dtype=np.int32)
+ 
+        
+        for i in range(0, max_length):
+            x, _ = word_embedding_forward(word, W_embed)
+            
+            if self.cell_type == 'rnn':
+                next_h, _ = rnn_step_forward(x, prev_h, Wx, Wh, b)
+                
+            prev_h = next_h
+            
+            next_h = np.expand_dims(next_h, axis = 1)
+            
+            score, _ = temporal_affine_forward(next_h, W_vocab, b_vocab)
+            
+            captions[:, i] = list(np.argmax(score, axis = 2))
+            word = captions[:, i]
+               
         pass
         ############################################################################
         #                             END OF YOUR CODE                             #
